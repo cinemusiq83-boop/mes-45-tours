@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b3261e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="45 tours">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Ma collection de 45 tours</title>
+<style>
+  :root {
+    --bg: #f3ede2;
+    --surface: #fffaf0;
+    --text: #231a14;
+    --muted: #7a6a5c;
+    --accent: #b3261e;
+    --line: #dccfbb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1411;
+      --surface: #261d18;
+      --text: #f1e7d8;
+      --muted: #a8978a;
+      --accent: #ec6a5e;
+      --line: #3b2e26;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    padding: 32px 20px 60px;
+  }
+  main { max-width: 960px; margin: 0 auto; }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .sous-titre { color: var(--muted); margin: 0 0 24px; font-style: italic; }
+  .recherche {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--surface);
+    border: 2px solid var(--text);
+    border-radius: 999px;
+    padding: 6px 18px;
+  }
+  .recherche:focus-within { border-color: var(--accent); }
+  .recherche input {
+    flex: 1; border: 0; background: transparent; color: var(--text);
+    font: inherit; font-size: 1.15rem; padding: 10px 0; outline: none;
+  }
+  .compteur { margin: 14px 4px 22px; color: var(--muted); font-size: .95rem; }
+  .grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 22px;
+  }
+  .disque { background: var(--surface); border: 1px solid var(--line); padding: 10px 10px 14px; }
+  .pochette {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    background: var(--line);
+  }
+  .artiste { margin: 12px 0 2px; font-weight: bold; font-size: 1.02rem; line-height: 1.25; }
+  .titre { margin: 0; color: var(--muted); font-style: italic; line-height: 1.3; }
+  mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: inherit; padding: 0 1px; }
+  .vide { grid-column: 1 / -1; padding: 40px 0; color: var(--muted); text-align: center; }
+
+  /* ---------- Effet vinyle : la pochette glisse, le disque sort ---------- */
+  .disque { position: relative; transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s; cursor: pointer; outline: none; }
+  .visuel { position: relative; }
+  .pochette { position: relative; z-index: 1; box-shadow: 2px 0 8px rgba(0,0,0,.25); }
+  .vinyle {
+    position: absolute; z-index: 0;
+    top: 3%; left: 3%; width: 94%; aspect-ratio: 1;
+    transition: transform .6s cubic-bezier(.2,.8,.2,1);
+    pointer-events: none;
+  }
+  .vinyle img { width: 100%; height: 100%; display: block; animation: tourne 9s linear infinite paused; }
+  @keyframes tourne { to { transform: rotate(360deg); } }
+  @media (hover: hover) {
+    .disque:hover, .disque:focus-visible { z-index: 5; transform: translateX(-6px); box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+    .disque:hover .vinyle, .disque:focus-visible .vinyle { transform: translateX(26%) rotate(30deg); }
+    .disque:hover .vinyle img, .disque:focus-visible .vinyle img { animation-play-state: running; }
+  }
+  /* Sur téléphone : un appui sur le disque fait sortir le vinyle */
+  .disque.ouvert { z-index: 5; transform: translateX(-6px); }
+  .disque.ouvert .vinyle { transform: translateX(26%) rotate(30deg); }
+  .disque.ouvert .vinyle img { animation-play-state: running; }
+  @media (prefers-reduced-motion: reduce) {
+    .disque, .vinyle { transition: none; }
+    .vinyle img { animation: none; }
+  }
+  body { overflow-x: clip; }
+
+  /* ---------- Version application mobile ---------- */
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    -webkit-tap-highlight-color: transparent;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    overscroll-behavior-y: none;
+  }
+  .entete { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .entete h1 { margin: 0; font-size: clamp(1.7rem, 7vw, 3rem); }
+  .logo { width: clamp(44px, 12vw, 64px); height: clamp(44px, 12vw, 64px); border-radius: 14px; object-fit: contain; flex: none; }
+  .recherche {
+    position: sticky; top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 20;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+  }
+  .recherche input { font-size: 1.1rem; min-width: 0; }
+  @media (max-width: 480px) {
+    .grille { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .disque { padding: 8px 8px 12px; }
+    .artiste { font-size: .95rem; }
+    .titre { font-size: .9rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="entete">
+    <img class="logo" src="https://files.catbox.moe/8qrgvf.png" alt="Logo" referrerpolicy="no-referrer"
+         onerror="this.onerror=null;this.src='icons/icon-192.png'">
+    <h1>Mes 45 tours</h1>
+  </header>
+  <p class="sous-titre">Cherchez par artiste ou par titre.</p>
+
+  <label class="recherche">
+    <span aria-hidden="true">🔍</span>
+    <input id="q" type="search" placeholder="Ex : Dalida, Aline, Let it be…" autocomplete="off">
+  </label>
+  <p class="compteur" id="compteur"></p>
+
+  <section class="grille" id="resultats" aria-live="polite"></section>
+</main>
+
+<script>
+/* ============================================================
+   ✏️  MA COLLECTION — c'est ici que vous ajoutez vos 45 tours.
+   Une ligne par disque :
+     { artiste: "…", titre: "…", pochette: "…" }
+   "pochette" = lien internet (https://…) OU chemin d'une image
+   à côté de ce fichier (ex : "pochettes/dalida.jpg").
+   Laissez "" pour afficher une pochette par défaut.
+   ============================================================ */
+const disques = [
+  { artiste: "Los Lobos", titre: "La Bamba", pochette: "https://i.discogs.com/7kPrn1-mBaa__EQ6qn4bST3KL8ZbakO1sJx29KwyZgw/rs:fit/g:sm/q:90/h:480/w:469/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcwNzE3/OS0xNDU4OTA2Nzkx/LTM2NTMuanBlZw.jpeg" },
+  { artiste: "Jeanne Mas", titre: "Johnny, Johnny", pochette: "https://i.discogs.com/FBb34zqApFDiQzZxy0JsTVGlThjX3e3c92XmsnAs_E8/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUzNTEw/MC0xMTQ4NTA2Njg1/LmpwZWc.jpeg" },
+  { artiste: "Marc Lavoine", titre: "Le Parking Des Anges", pochette: "https://i.discogs.com/2bzo9fd99qcZUfCjHzW7Fv8QljaTt-CGZCN2O64F4jo/rs:fit/g:sm/q:90/h:587/w:587/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNDg1/MzctMTI0MzMxNzQ4/MC5qcGVn.jpeg" },
+  { artiste: "Culture Club", titre: "Karma Chameleon", pochette: "https://i.discogs.com/EBdwcV2k3d7-K7_AK8DRFAped8KP3HQPZ6w1a9hoT64/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0NzU3/Ni0xMjg0NDgwMDA2/LmpwZWc.jpeg" },
+  { artiste: "Leopold Nord & Vous", titre: "C'est L'Amour", pochette: "https://i.discogs.com/P7AQWj6bXQcmQQ9jMDR-uHV4aQoOj5vhcvcxczNQjMY/rs:fit/g:sm/q:90/h:522/w:528/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUyODYx/OC0xMTcyOTQ2Mjc1/LmpwZWc.jpeg" },
+  { artiste: "Kaoma", titre: "Lambada", pochette: "https://i.discogs.com/u8p0C5Svn9C9Q5cQWAlY24H2D7cL2zeLhROYH3hJtDo/rs:fit/g:sm/q:90/h:525/w:525/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkzNDU0/NC0xMjg2ODUwOTU1/LmpwZWc.jpeg" },
+  { artiste: "Patrick Juvet", titre: "Où Sont Les Femmes ?", pochette: "https://i.discogs.com/WETzMES3OrebS1J9Ww11sfeVn6m02jz9uebR2ANeTJg/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTgw/OTAtMTcyMjYxMDQ2/My04MTgwLmpwZWc.jpeg" },
+  { artiste: "Culture Club", titre: "Do You Really Want To Hurt Me", pochette: "https://i.discogs.com/Bx814WrocV1IEDy7IxahFGXJEBfjDc3013yRdx7csuQ/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE2MjIy/NzctMTQxMDgyMDUx/OS0zMDExLmpwZWc.jpeg" },
+  { artiste: "Ben E. King", titre: "Stand By Me", pochette: "https://i.discogs.com/X77W1kGQwceb-NhWCie5tdI6NQuiAj2T-qrl7ODllXo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1ODM3/NS0xMTU5MjMyMDUz/LmpwZWc.jpeg" },
+  { artiste: "Bonnie Tyler", titre: "Total Eclipse Of The Heart", pochette: "https://i.discogs.com/PM15o_t4RUoTNsG3KvL6qygtUgsMxfX_3LaAUymL3sE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNjU0/NzItMTMyMzAyMDMz/Ny5qcGVn.jpeg" },
+  { artiste: "Black", titre: "Wonderful Life", pochette: "https://i.discogs.com/FVfh6i8-o7MRUiqzQ64FeB-QTDnNR2D7Wjrs74_BzV4/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNTY2/MC0xMTUzNTk0NjQ0/LmpwZWc.jpeg" },
+  { artiste: "Bandolero", titre: "Paris Latino", pochette: "https://i.discogs.com/xa0C8JPA6JjM64pSlQRx2C0bROrCbh8VXY7XNLCmG5g/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MDQz/MjMtMTY1MDA5NjE0/MC03OTg1LmpwZWc.jpeg" },
+  { artiste: "Chantal Goya", titre: "Voulez-Vous Danser Grand-Mère ?", pochette: "https://i.discogs.com/cBAh8pgFJ2fI_R41G15qJINmmvV8HaVGu5POjIWPtY4/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwOTkx/MjItMTM4NDQ1MjQx/MS03MzI4LmpwZWc.jpeg" },
+  { artiste: "Chantal Goya", titre: "Bécassine", pochette: "https://i.discogs.com/xnFHcHQPtP0QKyqLNT4sNDzOuA-T2WF6ihdBU2oEMe4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc5MzA5/MC0xMzYxODk1NzM1/LTU5MDYuanBlZw.jpeg" },
+  { artiste: "Fredericks / Goldman / Jones", titre: "À Nos Actes Manqués", pochette: "https://i.discogs.com/cKFab8w5X4oHOqtLbWzSeTlHilDecS7YBCtZahwM-8c/rs:fit/g:sm/q:90/h:480/w:480/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc3OTI4/MTItMTQ0ODg3ODQ0/NS01NTYyLmpwZWc.jpeg" },
+  { artiste: "Jean-Jacques Goldman", titre: "Il Changeait La Vie", pochette: "https://i.discogs.com/Wsd7LmphO372CtiucLoCs2IleIYoQZ4EBlKtKR-NmiU/rs:fit/g:sm/q:90/h:600/w:594/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODQz/MTctMTU5MjM1NDU3/MC0zNzU4LmpwZWc.jpeg" },
+  { artiste: "Johnny Hallyday", titre: "Laura", pochette: "https://i.discogs.com/j8ubbHxXZvI3vOXpLD8IkJS47D5YX2gXIzk7iCndFgU/rs:fit/g:sm/q:90/h:591/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNTQz/MjctMTc4NzE0OTM3/NC00MjAxLmpwZWc.jpeg" },
+  { artiste: "Johnny Hallyday", titre: "L'Envie", pochette: "https://i.discogs.com/oTLtWdF07fO4IdKHzh0CmGdsn3rLE6-zuUSsKZ8vzvY/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0Mzkx/MzA2LTE1NzM1Nzk3/MjItODAzMy5qcGVn.jpeg" },
+  { artiste: "Dead Or Alive", titre: "You Spin Me Round (Like A Record)", pochette: "https://i.discogs.com/FunJhnSmUGfly6VUCdLUGPeJ-dN_5CSydQcV6BH3NwI/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNTY0/NjMtMTIyMjk1NjQy/OS5qcGVn.jpeg" },
+  { artiste: "Simply Red", titre: "Moneys Too Tight (To Mention)", pochette: "https://i.discogs.com/4Arw7vnihpv1uhL1NMXLBKVwaHjVAqpxyWvHLNYUbpQ/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI0NDcx/MTUtMTU4MDIyNzgw/NC01NTE2LmpwZWc.jpeg" },
+  { artiste: "The Police", titre: "Every Breath You Take", pochette: "https://i.discogs.com/FimaIHEWNmWKTnV3aDqGTG1sG69qUIGjJ3RAs4ehaZY/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4OTg2/MC0xNDI5NjE5MDcw/LTE4NTIuanBlZw.jpeg" },
+  { artiste: "Mylène Farmer", titre: "Sans Logique", pochette: "https://i.discogs.com/rTPiCAK7XHeS7RjmORxxkRu8-KtKq77PjM2XykXAUE8/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyMTg0/Ni0xMzcxMzA2ODU4/LTQ2NDAuanBlZw.jpeg" },
+  { artiste: "Mylène Farmer", titre: "Libertine", pochette: "https://i.discogs.com/EICWBzcdp53pBUzMOZLIfZNnVjZaZ6iAk67PR6xLltA/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MjE4/NDEtMTcxNTY5OTU0/Mi05NjQyLmpwZWc.jpeg" },
+  { artiste: "Sade", titre: "Smooth Operator", pochette: "https://i.discogs.com/aK_iii2VzWsNOCU23xmL04BfQBktGl1_0U928FSE41w/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0MzQw/NTk4LTE1NzI1NTcy/MDctNTY3Ni5qcGVn.jpeg" },
+  { artiste: "Eric Serra", titre: "Le Grand Bleu", pochette: "https://i.discogs.com/XbYgR6KqOom8KgWz01_uSsRnyRXA8eUabIp2sX1wMH8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxMDg5/MDQtMTc0NzgxNjkz/NC02OTM0LmpwZWc.jpeg" },
+  { artiste: "Berlin", titre: "Take My Breath Away", pochette: "https://i.discogs.com/uGDQZuBZiErcN3W8yTyhCyc1AsqwWGSCWe7Vnjnzi6M/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjU0/MjU4LTE1NTA3OTgx/MjktNjA5OS5qcGVn.jpeg" },
+  { artiste: "George Michael", titre: "Careless Whisper", pochette: "https://i.discogs.com/Jgzgx27kWWM6LkVJWQ_ojke1rG00FChuvss5SOctLgg/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4ODE1/MDQtMTU3Njc4MTc1/OC01NDc2LmpwZWc.jpeg" },
+  { artiste: "Elton John", titre: "I'm Still Standing", pochette: "https://i.discogs.com/_Y_kWfxsQncZUYU3XY7d8MoZraNYWeoOxa0GNKxt8mg/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExODA4/ODUwLTE1MjI3NDg1/NTItNTY4Ni5qcGVn.jpeg" },
+  { artiste: "Diana Ross", titre: "Upside Down", pochette: "https://i.discogs.com/_CscqA6s68lGccwgQl-qU4-UBOhnGsEcyg1v_Dp8h9s/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYwNjU3/NzUtMTcxNzUxNjEw/MS0xNjAxLmpwZWc.jpeg" },
+  { artiste: "Phil Collins", titre: "In The Air Tonight", pochette: "https://i.discogs.com/GKdsB8Mq8KaY4EFS4tTHnwHeRDIcls3kLViuqtcJ2y8/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU4ODI0/Mi0xMjgzMDUzOTYz/LmpwZWc.jpeg" },
+  { artiste: "Céline Dion", titre: "D'Amour Ou D'Amitié", pochette: "https://i.discogs.com/ZlyTiE4DvsbdOSbshYa7utLrgqGCcpolS1jrNjVo820/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMjU4/MjI2LTE2NzAxODg2/MTMtMTYxNS5wbmc.jpeg" },
+  { artiste: "Charlie Makes", titre: "The Cook Boys And Girls", pochette: "https://i.discogs.com/IW0V9QR_Mpow3CQvxNaYx3NBglU_JvfHMjSreZ2uYyU/rs:fit/g:sm/q:90/h:563/w:563/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0OTE0/OTUtMTIyMzcwMDY4/MC5qcGVn.jpeg" },
+  { artiste: "Caroline Loeb", titre: "C'est La Ouate", pochette: "https://i.discogs.com/Tx3BHruJ8EzpHBcFCGhAbj4CXF3Wybg7GPXGivAwhbA/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNDM1/NTEzLTE1MTYyODYx/NjctNDU1Mi5qcGVn.jpeg" },
+  { artiste: "Desireless", titre: "Voyage Voyage", pochette: "https://i.discogs.com/YsFDICaUNWAKxns4KOFXjbEoTK6tq2wSfEn3bU8jY3g/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTYxMzAy/MTUtMTY4MzMxNjU4/NS04MDUyLmpwZWc.jpeg" },
+  { artiste: "Début De Soirée", titre: "Nuit De Folie", pochette: "https://i.discogs.com/9JFfcustHzgvSXEDsBc4GVQQo3Rje-h4DGHaK1pENdo/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY5OTI2/NC0xMjE1NzY3MDgw/LmpwZWc.jpeg" },
+  { artiste: "Elton John", titre: "Nikita", pochette: "https://i.discogs.com/5Jh-C38L7Za0Z9zEzzNsxA6TErY9s9nncqMwsimuhn0/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNTAx/NC0xMjgzMDI0MDc3/LmpwZWc.jpeg" },
+  { artiste: "Elsa", titre: "T'En Va Pas", pochette: "https://i.discogs.com/NWc6ine9uI7TWPwksOReYX4RUInHPKmCmujEUKz8OVk/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczMzgw/MzctMTUwMjk0MDg0/OS05MDkyLmpwZWc.jpeg" },
+  { artiste: "Europe", titre: "The Final Countdown", pochette: "https://i.discogs.com/UBiIpo4nF0wN7JCUC_qwU8OEl3BW1r2nbOQKZF4V6Z8/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc1OTAy/NDEtMTQ0NDY3MjI0/OS0zODY5LmpwZWc.jpeg" },
+  { artiste: "Eros Ramazzotti", titre: "Una Storia Importante", pochette: "https://i.discogs.com/SA0ZwxK_i0z877_DO4H6-TpX56xKFPKNeeAT_xlimj8/rs:fit/g:sm/q:90/h:599/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgwNDQw/MzktMTQ1NDA3NDEy/NS05MDkzLmpwZWc.jpeg" },
+  { artiste: "François Feldman", titre: "Les Valses De Vienne", pochette: "https://i.discogs.com/baVHwUNJuH4uXSH2I4c6SD8-qd8hP-j-5mclRwmG04k/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0MDA5/NS0xNzE4Mzc2OTc1/LTQxMzEuanBlZw.jpeg" },
+  { artiste: "France Gall", titre: "Ella Elle L'A", pochette: "https://i.discogs.com/-j2MR_IfoJUaas9ThmOpoW6n_ZUcjuuGGD6zU0p9TUg/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNjE5/Mi0xMTk2NDY0MzM2/LmpwZWc.jpeg" },
+  { artiste: "France Gall", titre: "Débranche !", pochette: "https://i.discogs.com/cmlasl5pVAgSNGfYxdn8_6kFf__qH4uHNk-83CNx7FM/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNjg1/NjItMTc1MTI4NzU4/NS0xMTU0LmpwZWc.jpeg" },
+  { artiste: "George Benson", titre: "Give Me The Night", pochette: "https://i.discogs.com/c5E3At0YxnPHVWbxAlFeUEJTgCF0tIfT91KcV3DNITw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY4OTE3/MDYtMTQyODk0OTk5/OC05NjQ1LnBuZw.jpeg" },
+  { artiste: "Gérard Blanc", titre: "Une Autre Histoire", pochette: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1SL2oNbWgLy5Q_8Rvg0FB97M3Y56ZV0e3ZMthFaOWkmgqEs2efuq8gZQ&s=10" },
+  { artiste: "Village People", titre: "Megamix", pochette: "https://i.discogs.com/gD-1fhLMyHEUQBnQmuCtAjl6ZQwlhepyagUa29Vd7Xs/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3Mzkx/NTUtMTI5ODgzMTIz/MS5qcGVn.jpeg" },
+  { artiste: "Madonna", titre: "La Isla Bonita", pochette: "https://i.discogs.com/Sx3NmUAqJyWJ3XTqneIN2pHqIXTvRjtCq3EZFSOX4b8/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTczNTYz/OS0xNTg2NjEwMDIz/LTkyMjkuanBlZw.jpeg" },
+  { artiste: "Jeanne Mas", titre: "Toute Première Fois", pochette: "https://i.discogs.com/cPxTQD_eG3TXyAQsMdAcsdP62X07BJoQLRGhIws6dqo/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyOTc4/ODktMTQ4NDM1Mzc3/MS01Mjk3LmpwZWc.jpeg" },
+  { artiste: "Jean-Pierre Mader", titre: "Macumba", pochette: "https://i.discogs.com/jq0l1gIY3bDIWoCb-CJg16dkCUQ2bpwE4F6r7MMaDLs/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0NDE3/Nzc2LTE1NzQxMTE2/NzctMzExMi5qcGVn.jpeg" },
+  { artiste: "Lio", titre: "Les Brunes Comptent Pas Pour Des Prunes", pochette: "https://i.discogs.com/JAGmcD825T1_YAOk7I6Px4Vy0_7gNOt2qD2G-eermaM/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTkzODgz/NS0xNDQyMDA5ODYx/LTYxNDguanBlZw.jpeg" },
+  { artiste: "John Travolta, Olivia Newton-John", titre: "Summer Nights", pochette: "https://i.discogs.com/_5VMzza4eq6_o2-O4tmcnJGnt-uytzZpU43iotd746A/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNjU1/MDcxLTE1MDE3Nzg4/NjAtNTgwMy5qcGVn.jpeg" },
+  { artiste: "Imagination", titre: "Music And Lights", pochette: "https://i.discogs.com/3zlSFnIA3BC_XtpfvN8OsSeC6NnaNmWOvqgQ1e2SrZY/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTM2/MjctMTM2NTU4NzY1/MS0zMjEwLmpwZWc.jpeg" },
+  { artiste: "Imagination", titre: "Just An Illusion", pochette: "https://i.discogs.com/17qr5JXNQcxOFhV_HmZAPQgTS69cidvHm9xxwFCFA88/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwNDcz/MDY3LTE0OTgxNTM0/MTktNzA3MS5qcGVn.jpeg" },
+  { artiste: "Images", titre: "Les Démons De Minuit", pochette: "https://i.discogs.com/SgbHuwRKDo_J3AIUHUBmYwu7Wx01WHz8KOiZnDxXfts/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwMzY3/NC0xNDkxOTEwNDYw/LTQyMTMuanBlZw.jpeg" },
+  { artiste: "Patrick Hernandez", titre: "Born To Be Alive", pochette: "https://i.discogs.com/pa_jjJwRimC82rw_uwT-Zgw3yzznaRY61erTdsUPqnw/rs:fit/g:sm/q:90/h:600/w:592/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwNDA4/OC0xNjg5NDIyNDU4/LTczNjcuanBlZw.jpeg" },
+  { artiste: "Jean-Jacques Goldman", titre: "Quand La Musique Est Bonne", pochette: "https://i.discogs.com/4Ge4Idk22Suw8d4vbBxsHE4l51fOr4JLF_0Bp_PuKSE/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxNTUw/MjAtMTI2Njk3MTUw/MC5qcGVn.jpeg" },
+  { artiste: "Jean-Jacques Goldman", titre: "Je Marche Seul", pochette: "https://i.discogs.com/mhTDT3HPhRbHCyakOeWoZdrmx67-iDvwteSkryL23No/rs:fit/g:sm/q:90/h:480/w:480/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk2OTUw/NzgtMTQ4NDkwOTQx/OC0zMzc0LnBuZw.jpeg" },
+  { artiste: "Laura Branigan", titre: "Self Control", pochette: "https://i.discogs.com/utnWdbt6z5aX9oR_cHpwiilCwNXxjezCD-2yJO9sO_c/rs:fit/g:sm/q:90/h:530/w:531/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyMTUw/MjYtMTMwMjg1NDIy/Mi5qcGVn.jpeg" },
+  { artiste: "Michel Berger", titre: "La Groupie Du Pianiste", pochette: "https://i.discogs.com/3AT5lU64hX7jziO2QoMdlIcVsVctiRzxFGfcOw-3NhQ/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMDI1/MTE1LTE1NDY2OTU2/NTItMTQ1NC5qcGVn.jpeg" },
+  { artiste: "Lio", titre: "Fallait Pas Commencer", pochette: "https://i.discogs.com/PyfNxf6wT1u4VGfyFV-1_heFFvD6PdumAYfLE7STtSU/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUwOTgw/NC0xNDIzNDIyNjU1/LTMzMTQuanBlZw.jpeg" },
+  { artiste: "Stéphanie", titre: "Ouragan", pochette: "https://i.discogs.com/_yU3OgXzhcg0gY7p6Wi_Yt2ZOwEy_BRjUTkrRRM3GYA/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY5NzEy/MC0xNTE1MjUyMzU1/LTUwMTcuanBlZw.jpeg" },
+  { artiste: "Gold", titre: "Plus Près Des Étoiles", pochette: "https://i.discogs.com/_Rb-8KrKSDIOu03lBBemg47IoSWZbEBLleeOnito2rc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgwODAy/MzMtMTQ2NzU1MzY2/OS00NDc4LmpwZWc.jpeg" },
+  { artiste: "Julie Pietri", titre: "Ève Lève-Toi", pochette: "https://i.discogs.com/KtgGnhPoBwLIQt_dKJz-6tuY6swOdcycC3xFuAwf1wM/rs:fit/g:sm/q:90/h:600/w:594/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExODA1/NzgwLTE1MjI2ODc3/NzAtMjM4Ny5qcGVn.jpeg" },
+  { artiste: "Modern Talking", titre: "You're My Heart, You're My Soul", pochette: "https://i.discogs.com/dgv52YMRP-1uujE42XGIVjFRnNQyz5Mlk8Susy3Wd28/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0ODkx/NzgtMTU3MzQ5Mzc0/OS03OTgxLmpwZWc.jpeg" },
+  { artiste: "Moon Ray", titre: "Comanchero", pochette: "https://i.discogs.com/JSlugYQ6cmDhRD9DLkL2LOcvMQ1Sa6LGBnClp5sB_ME/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3MDQw/NC0xMTkwNjMzNTYw/LmpwZWc.jpeg" },
+  { artiste: "Les Rita Mitsouko", titre: "Andy", pochette: "https://i.discogs.com/vvttMjWs54IlABySp9foBw3ANtsYTZqssRo9hgVcwEU/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxODE5/OS0xMjAzMDgzNTc1/LmpwZWc.jpeg" },
+  { artiste: "Jeanne Mas", titre: "En Rouge Et Noir", pochette: "https://i.discogs.com/yW4xhPTSxgUCTdPEwDZNRlHSV_6ZRrf_GU6MyrW-YCM/rs:fit/g:sm/q:90/h:532/w:540/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyOTc4/OTEtMTM4MDQ2MTAw/MC05MTAwLmpwZWc.jpeg" },
+  { artiste: "MC Hammer", titre: "U Can't Touch This", pochette: "https://i.discogs.com/Kksd-yBwQjZiVu0va6LZ2Ijk55rhyyJE7FQn-wno2o4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwOTc4/Mjk1LTE3MTg1NDQw/MDgtOTM4MC5qcGVn.jpeg" },
+  { artiste: "Jimmy Somerville", titre: "Mighty Real", pochette: "https://i.discogs.com/RLkuAz4qFh2zfEkK3IjpEw4i-VdES8XVjT4qA7xLkNM/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzODE0/MC0xNTcyODk5NTg4/LTMyNTUuanBlZw.jpeg" },
+  { artiste: "Images", titre: "Corps À Corps", pochette: "https://i.discogs.com/JojjEhjovyEogo3IrL_Pp28X619CsOCetQs_WkAHqw0/rs:fit/g:sm/q:90/h:590/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3Mzcy/NS0xMTk2MDA1NTgy/LmpwZWc.jpeg" },
+  { artiste: "Johnny Hallyday", titre: "Quelque Chose De Tennessee", pochette: "https://i.discogs.com/RZX5jJOultJlzUkFWx-08DnTe807YdS4FsSpCJheNtw/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODM4/NjktMTc4OTE0MTM1/OC00ODY2LmpwZWc.jpeg" },
+  { artiste: "Les Rita Mitsouko", titre: "C'Est Comme Ça", pochette: "https://i.discogs.com/CvdFKSiJoHAsLt1owZpZllhXJiFgwK5s0w8mFGxpIiU/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNjky/NzgtMTI5MDM3NTgw/NS5qcGVn.jpeg" },
+  { artiste: "Julien Clerc", titre: "La Fille Aux Bas Nylons", pochette: "https://i.discogs.com/xEEbbrq2n4_Mz7Zvx7YbW6xdC9YC9Ov9cLHlLHBbRBA/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcwNjM0/OTYtMTQzMzI0MzU2/Mi0yMjMxLmpwZWc.jpeg" },
+  { artiste: "Trust", titre: "Antisocial", pochette: "https://i.discogs.com/cRf0BgarI54YfUjtupOna95JCMYyBGH0iy2JXYV4s9I/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMTAx/ODE5LTE1NDgwODU2/ODYtMjYyMS5qcGVn.jpeg" },
+  { artiste: "Lionel Richie", titre: "Say You, Say Me", pochette: "https://i.discogs.com/hS6mYxd4eUCiI4pe47d3vgf_br4dJD3xNtWMYw7oIa0/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUyNzY0/Ny0xMzkwNTQyNjE3/LTE5NjYuanBlZw.jpeg" },
+  { artiste: "Jean Schultheis", titre: "", pochette: "https://i.discogs.com/pdPKTNdZRe4vHePirxeFpSm3gxgNIl6Fz1-zjb8xqr0/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTUzNDQ1/OS0xNjYzOTQ0MTg1/LTY2ODEuanBlZw.jpeg" },
+  { artiste: "Peter Et Sloane", titre: "Besoin De Rien, Envie De Toi", pochette: "https://i.discogs.com/7wgBWURqYj_VIMHVKyoDzSxcnWhTVJPaT-MkktbJNug/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY3OTA2/MS0xNDQzNDQ1MjUy/LTI1OTEuanBlZw.jpeg" },
+  { artiste: "Queen", titre: "Another One Bites The Dust", pochette: "https://i.discogs.com/Zi6imt8ztBlVGdV4iE7qxWoDu_q3j24mlapJqhP96ho/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU5MDU5/My0xNTI5MTkxOTY2/LTY1OTYuanBlZw.jpeg" },
+  { artiste: "UB40", titre: "Kingston Town", pochette: "https://i.discogs.com/fTJ6l_QoRQWS9BoJJPUUhUyLBMU6f-QETUiG3h4ZzVk/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU5MjMz/Ni0xMzM0NDM3Mzgz/LmpwZWc.jpeg" },
+  { artiste: "Zouk Machine", titre: "Maldon", pochette: "https://i.discogs.com/ZnuxFz4r4EsrN1iPm6wNTZHD8F5E4bbotJ7LmTYL8aE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyMjEz/MTgwLTE1MzA2Mzc0/OTEtNTQ4Ny5qcGVn.jpeg" },
+  { artiste: "Michael Sembello", titre: "Maniac", pochette: "https://i.discogs.com/m1AMIBml6TugGZCE5Ll9jKbUGza0huu6FWPXHrwq3tQ/rs:fit/g:sm/q:90/h:530/w:527/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjA3/My0xMTE3NDA4NjAy/LmpwZw.jpeg" },
+  { artiste: "Mylène Farmer", titre: "Pourvu Qu'Elles Soient Douces", pochette: "https://i.discogs.com/YttOZ20MCqYXL0x26Co3O8f7ozbHkRdgyn-wQnTlyGs/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg1MjU1/My0xMzI4NTM1OTU0/LmpwZWc.jpeg" },
+  { artiste: "Mylène Farmer", titre: "Sans Contrefaçon", pochette: "https://i.discogs.com/KRajYJStHxt6u01KXLQuDs2VxQnxZ-pXETzzZpN6muI/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU0NjEx/NTMtMTM5Mzk1MTg4/OC0yMTA3LmpwZWc.jpeg" },
+  { artiste: "Madonna", titre: "Papa Don't Preach", pochette: "https://i.discogs.com/V5IXU-V26X3NgP0GS9t5sJWvhPB704wJX9HNZm-7tI0/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc3NjI3/OTMtMTQ0ODI1NTc4/Mi0zNTIyLmpwZWc.jpeg" },
+  { artiste: "Jermaine Jackson, Pia Zadora", titre: "When The Rain Begins To Fall", pochette: "https://i.discogs.com/H_kbyEqtOE7qzFImYsSQevAh9eSZ4y2t7ALD3p1GqFo/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQzMDI5/NjYtMTM2MTE5NDgx/OS05NTc1LmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "Don't Stop 'Til You Get Enough", pochette: "https://i.discogs.com/C6rFMiBESoAq7czH8d4KmfaetFGHVRX_uPW6_2vie3I/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5ODk2/My0xMzg3NTc4NDUw/LTkzNzMuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Thriller", pochette: "https://i.discogs.com/pyb_uCcvBQW3OvfreayIClDph7rS5b88mnqcuPEpSls/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNjIx/ODAtMTIxMjkyMzEz/OC5qcGVn.jpeg" },
+  { artiste: "Michael Jackson", titre: "Beat It", pochette: "https://i.discogs.com/QHDPN40vZVUrM4GhmmINMToZ0S4x2qZT9Q0-siPEiuE/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ3OTEy/MS0xNzg5NzU1NDU1/LTY0NTAuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Billie Jean", pochette: "https://i.discogs.com/d7Nxr05ytUbuy_d7gvQXHjpuS0egSH1cwI_HxvWdy58/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwOTY0/OS0xNjcwMzIzNjI0/LTgyODguanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Human Nature / P.Y.T (Pretty Young Thing)", pochette: "https://i.discogs.com/raLoGKXZYmDBnIU3rG7-TJsaPWajjrIfFz38VCYuTQc/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1MDQw/MDU3LTE1ODU4NzA3/MzItNTcwOS5qcGVn.jpeg" },
+  { artiste: "The Jacksons", titre: "Torture", pochette: "https://i.discogs.com/FDfSYsDxzgOgz1pDtI99GC-E-A6JOJ8x3lT0FJ1YmgU/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTY0NzI4/Ni0xNzI1MjkwMTQy/LTE2OTMuanBlZw.jpeg" },
+  { artiste: "U.S.A For Africa", titre: "We Are The World", pochette: "https://i.discogs.com/eR8LRyQGH93zCmjXigM2UcDpzvoSjf4dL_e1346q3eY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM5MDE0/NS0xNjY4NjE1NTA3/LTc4MTMuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Bad", pochette: "https://i.discogs.com/cpDbumrRwp1jOttQKGjQ0mDqyI78cFXcIwCeD78vnVw/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEyMDcw/NTctMTQ2Mzc1Mjk0/Ni01MDQ4LmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "The Way You Make Me Feel", pochette: "https://i.discogs.com/lnMVaXInzTkCctX2it4tEjc6aYzFYz7ClR3JELSI-I8/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTU1MzU3/MTAtMTUxMzYxODYz/My0zODU4LmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "Liberian Girl", pochette: "https://i.discogs.com/3xhVQCr9UMxXFMmceylTYsVCSdDCald4LBH8zK_vdGI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTQ5ODEx/OC0xNjgxMjA3Mzk0/LTg1ODUuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Another Part Of Me", pochette: "https://i.discogs.com/jH762y2PdLZZAU0gST4FOYRX2l9rUkKPYvy6gBW471E/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMDIw/NzktMTYwOTg0NTE3/OS03NjEwLmpwZWc.jpeg" },
+  { artiste: "Michael Jackson, Siedah Garrett", titre: "I Just Can't Stop Loving You", pochette: "https://i.discogs.com/Gv7iapU9yTg2j0TpTN8EPguA40dssJbzpoNXzqzwT90/rs:fit/g:sm/q:90/h:541/w:535/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3MDEy/NTItMTM2NjQwMDg0/MS02NzMzLmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "Dirty Diana", pochette: "https://i.discogs.com/XKADVebgha2Rp85ZKTHMP8t0KctugkXF3CBDSMN79ps/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNzk3/NDgtMTYwODYyODg1/NC04NjgxLmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "Smooth Criminal", pochette: "https://i.discogs.com/ZSFmbM87RJFHStppY6prjnT7QkYL8fFUnYgc4_aVs6M/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIwOTYy/MS0xNjQzMDU2Mjg4/LTIwMDYuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Leave Me Alone", pochette: "https://i.discogs.com/Ed_SegZTmgsXi01Z8wQH-9VRb5Nr9rbiKjRQnDhwWCw/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExNzQz/MjgtMTYwODYzMjIw/Mi0yMTcyLmpwZWc.jpeg" },
+  { artiste: "Michael Jackson", titre: "In The Closet", pochette: "https://i.discogs.com/um2NFOxYLYt9qXWyeI7S97Ge_U18yjenoQbkNfKib_I/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk3OTg3/Ny0xNTU5OTgyNjgz/LTk0ODguanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Remember The Time", pochette: "https://i.discogs.com/He2eJzbPRMsEPv73dvkarQIv2FvsO1u5_Z5C1oNeINk/rs:fit/g:sm/q:40/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk4OTEy/Ni0xNjE0MjkyOTk4/LTYxNDQuanBlZw.jpeg" },
+  { artiste: "Michael Jackson", titre: "Heal The World", pochette: "https://i.discogs.com/7O7hnBDDyfu7bSsJw2ktD7tYGKl-FIAELYPwYi1TZ0w/rs:fit/g:sm/q:90/h:535/w:536/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE0MjE3/MzUtMTIxODM1ODQz/MS5qcGVn.jpeg" },
+  { artiste: "Michael Jackson", titre: "Black Or White", pochette: "https://i.discogs.com/OvbNiNeO57l9DiVsgqTowz5EL3qFwoeURCV3CN0Vxjw/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzODgz/NDctMTQ0MDY2MzQ5/MS02ODQ5LmpwZWc.jpeg" },
+  // Ajoutez vos 45 tours ici
+];
+
+/* ---------- Code de la recherche (inutile d'y toucher) ---------- */
+const champ = document.getElementById("q");
+const zone = document.getElementById("resultats");
+const compteur = document.getElementById("compteur");
+
+// Ignore les accents et les majuscules : "eli" trouve "Élie"
+const normaliser = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const echapper = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* Image du vinyle qui sort de la pochette (remplacez le lien si besoin) */
+const VINYLE_URL = "https://www.nostalgie.be/build/images/vinyl.74ad9c39.png";
+// Vinyle dessiné, utilisé si l'image ci-dessus ne se charge pas
+const VINYLE_SECOURS = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="98" fill="#111"/>
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#2a2420" stroke-width="2"/>
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#2a2420" stroke-width="2"/>
+  <circle cx="100" cy="100" r="58" fill="none" stroke="#2a2420" stroke-width="2"/>
+  <path d="M100 100 L30 40 A90 90 0 0 1 80 12 Z" fill="#fff" opacity=".06"/>
+  <circle cx="100" cy="100" r="32" fill="#b3261e"/>
+  <circle cx="100" cy="100" r="4" fill="#111"/>
+</svg>`);
+
+// Pochette par défaut : un petit disque dessiné
+function pochetteParDefaut(artiste) {
+  const initiale = echapper((artiste || "?").trim().charAt(0).toUpperCase());
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#3a2d26"/>
+    <circle cx="100" cy="100" r="88" fill="#15110f"/>
+    <circle cx="100" cy="100" r="70" fill="none" stroke="#2c241f" stroke-width="2"/>
+    <circle cx="100" cy="100" r="54" fill="none" stroke="#2c241f" stroke-width="2"/>
+    <circle cx="100" cy="100" r="30" fill="#b3261e"/>
+    <text x="100" y="109" font-family="Georgia,serif" font-size="26" fill="#fff" text-anchor="middle">${initiale}</text>
+    <circle cx="100" cy="100" r="3" fill="#15110f"/>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+// Surligne le texte cherché
+function surligner(texte, recherche) {
+  if (!recherche) return echapper(texte);
+  const n = normaliser(texte), i = n.indexOf(recherche);
+  if (i === -1 || n.length !== texte.length) return echapper(texte);
+  return echapper(texte.slice(0, i)) + "<mark>" + echapper(texte.slice(i, i + recherche.length)) + "</mark>" + echapper(texte.slice(i + recherche.length));
+}
+
+function afficher() {
+  const r = normaliser(champ.value.trim());
+  const trouves = disques
+    .filter(d => normaliser(d.artiste + " " + d.titre).includes(r))
+    .sort((a, b) => a.artiste.localeCompare(b.artiste, "fr"));
+
+  compteur.textContent = r
+    ? trouves.length + " résultat" + (trouves.length > 1 ? "s" : "") + " sur " + disques.length + " disques"
+    : disques.length + " disques dans la collection";
+
+  if (!trouves.length) {
+    zone.innerHTML = '<p class="vide">Aucun 45 tours ne correspond à « ' + echapper(champ.value) + ' ».</p>';
+    return;
+  }
+
+  zone.innerHTML = trouves.map(d => {
+    const src = d.pochette || pochetteParDefaut(d.artiste);
+    return `<article class="disque" tabindex="0">
+      <div class="visuel">
+        <span class="vinyle"><img src="${VINYLE_URL}" alt="" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.onerror=null;this.src=VINYLE_SECOURS"></span>
+        <img class="pochette" src="${echapper(src)}" alt="Pochette de ${echapper(d.titre)}" loading="lazy" referrerpolicy="no-referrer"
+             onerror="this.onerror=null;this.src='${pochetteParDefaut(d.artiste).replace(/'/g, "%27")}'">
+      </div>
+      <p class="artiste">${surligner(d.artiste, r)}</p>
+      <p class="titre">${surligner(d.titre, r)}</p>
+    </article>`;
+  }).join("");
+}
+
+champ.addEventListener("input", afficher);
+zone.addEventListener("click", e => {
+  const carte = e.target.closest(".disque");
+  if (!carte) return;
+  const etaitOuvert = carte.classList.contains("ouvert");
+  zone.querySelectorAll(".ouvert").forEach(c => c.classList.remove("ouvert"));
+  if (!etaitOuvert) carte.classList.add("ouvert");
+});
+afficher();
+
+// Installation / mode hors-ligne
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
